@@ -12,11 +12,11 @@ session = dryscrape.Session()
 
 
 def controllaStato():
-    print("[", time.strftime("%x %X", time.gmtime()), "] Visito la pagina ", url)
+    print("[", time.asctime(time.localtime(time.time())), "] Visito la pagina ", url)
     session.visit(url)
     time.sleep(15)  # Attendo che venga caricata la pagina
     response = session.body()
-    print("[", time.strftime("%x %X", time.gmtime()), "] Ho visitato la pagina")
+    print("[", time.asctime(time.localtime(time.time())), "] Ho visitato la pagina")
 
     soup = BeautifulSoup(response, 'html.parser')
 
@@ -37,18 +37,18 @@ def controllaStato():
     # print(type(divs.get_text()))
 
     # print("Batteria ", stato)
-    print("[", time.strftime("%x %X", time.gmtime()), "] Batteria: ", stato)
+    print("[", time.asctime(time.localtime(time.time())), "] Batteria: ", stato)
     stato = int(stato)
 
     # TODO: Pensare ad un modo dinamico di calcolare il tempo di attesa in base alla velocità di scaricamento della batteria
     if stato > 49:
-        print("[", time.strftime("%x %X", time.gmtime()), "] Attendo 60 minuti")
+        print("[", time.asctime(time.localtime(time.time())), "] Attendo 60 minuti")
         time.sleep(60*60)  # Attesa di 60 minuti
     elif stato < 50 and stato > 29:
-        print("[", time.strftime("%x %X", time.gmtime()), "] Attendo 30 minuti")
+        print("[", time.asctime(time.localtime(time.time())), "] Attendo 30 minuti")
         time.sleep(60*30)  # Attesa di 30 minuti
     elif stato < 30 and stato > 9:
-        print("[", time.strftime("%x %X", time.gmtime()), "] Attendo 5 minuti")
+        print("[", time.asctime(time.localtime(time.time())), "] Attendo 5 minuti")
         session.visit(urlWebhook)  # Chiamo il webhook per mandare la notifica
         time.sleep(60 * 5)  # Attesa di 5 minuti
     controllaStato()
