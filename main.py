@@ -45,6 +45,8 @@ def controllaStato(ultimaPercentuale=-1):
     if ultimaPercentuale == -1:
         ultimaPercentuale = stato
 
+    print("[", time.asctime(time.localtime(time.time())),
+          "] Ultima percentuale: ", ultimaPercentuale)
     inCarica = (stato > ultimaPercentuale)
 
     print("[", time.asctime(time.localtime(time.time())), "] In carica: ", inCarica)
@@ -55,10 +57,12 @@ def controllaStato(ultimaPercentuale=-1):
             requests.post(urlWebhook, json={
                           'value1': 'Batteria carica. Spegnere la presa'})
             inCarica = False
+            ultimaPercentuale = stato
             controllaStato(ultimaPercentuale)
         print("[", time.asctime(time.localtime(time.time())),
               "] Attendo ", 100 - stato, " minuti")
         time.sleep(60*(100-stato))  # Attesa dinamica
+        ultimaPercentuale = stato
         controllaStato(ultimaPercentuale)
     else:
         # TODO: Pensare ad un modo dinamico di calcolare il tempo di attesa in base alla velocità di scaricamento della batteria
@@ -76,6 +80,7 @@ def controllaStato(ultimaPercentuale=-1):
             print("[", time.asctime(time.localtime(time.time())),
                   "] Attendo ", attesa, " minuti")
             time.sleep(60*attesa)  # Attesa dinamica "inversa"
+        ultimaPercentuale = stato
         controllaStato(ultimaPercentuale)
 
 
