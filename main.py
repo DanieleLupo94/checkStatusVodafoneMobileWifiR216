@@ -6,12 +6,14 @@ from bs4 import BeautifulSoup
 import dryscrape
 
 url = 'http://192.168.0.1/html/home.htm'
-urlWebhook = 'https://maker.ifttt.com/trigger/evento/with/key/crgmhm7kuG2plVg8e7W1_V'
+urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
 dryscrape.start_xvfb()
 session = dryscrape.Session()
+inCarica = False
+ultimaPercentuale = -1
 
 
-def controllaStato():
+def controllaStato(ultimaPercentuale=-1):
     print("[", time.asctime(time.localtime(time.time())), "] Visito la pagina ", url)
     session.visit(url)
     time.sleep(15)  # Attendo che venga caricata la pagina
@@ -40,18 +42,41 @@ def controllaStato():
     print("[", time.asctime(time.localtime(time.time())), "] Batteria: ", stato)
     stato = int(stato)
 
-    # TODO: Pensare ad un modo dinamico di calcolare il tempo di attesa in base alla velocità di scaricamento della batteria
-    if stato > 49:
-        print("[", time.asctime(time.localtime(time.time())), "] Attendo 60 minuti")
-        time.sleep(60*60)  # Attesa di 60 minuti
-    elif stato < 50 and stato > 29:
-        print("[", time.asctime(time.localtime(time.time())), "] Attendo 30 minuti")
-        time.sleep(60*30)  # Attesa di 30 minuti
-    elif stato < 30 and stato > 9:
-        print("[", time.asctime(time.localtime(time.time())), "] Attendo 5 minuti")
-        session.visit(urlWebhook)  # Chiamo il webhook per mandare la notifica
-        time.sleep(60 * 5)  # Attesa di 5 minuti
-    controllaStato()
+    if ultimaPercentuale == -1:
+        ultimaPercentuale = stato
+
+    inCarica = (stato > ultimaPercentuale)
+
+    print("[", time.asctime(time.localtime(time.time())), "] In carica: ", inCarica)
+
+    if inCarica:
+        if stato == 100:
+            # TODO: Spegnere il caricabatteria
+            requests.post(urlWebhook, json={
+                          'value1': 'Batteria carica. Spegnere la presa'})
+            inCarica = False
+            controllaStato(ultimaPercentuale)
+        print("[", time.asctime(time.localtime(time.time())),
+              "] Attendo ", 100 - stato, " minuti")
+        time.sleep(60*(100-stato))  # Attesa dinamica
+        controllaStato(ultimaPercentuale)
+    else:
+        # TODO: Pensare ad un modo dinamico di calcolare il tempo di attesa in base alla velocità di scaricamento della batteria
+        if stato < 11:
+            print("[", time.asctime(time.localtime(time.time())),
+                  "] Batteria scarica. Invio la notifica ed attendo 5 minuti.")
+            # Chiamo il webhook per mandare la notifica
+            session.visit(urlWebhook)
+            requests.post(urlWebhook, json={
+                          'value1': 'Batteria scarica. Accendere la presa'})
+            time.sleep(60*5)  # Attesa di 5 minuti
+        else:
+            """ Ho calcolato in questo modo l'attesa in modo da avere un'attesa massima quando è carica e poi decrescente insieme alla batteria """
+            attesa = 100 - (100 - stato)
+            print("[", time.asctime(time.localtime(time.time())),
+                  "] Attendo ", attesa, " minuti")
+            time.sleep(60*attesa)  # Attesa dinamica "inversa"
+        controllaStato(ultimaPercentuale)
 
 
 controllaStato()
