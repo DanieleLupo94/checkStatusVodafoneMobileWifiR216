@@ -1,34 +1,33 @@
 import time
 import urllib.request
+import signal
 
 import requests
 from bs4 import BeautifulSoup
 import dryscrape
-# Uso quello che sta nella cartella perché ha il metodo di stop
-from dryscrape import xvfb
+import webkit_server
 
 # TODO: Forse non serve creare una sessine ogni volta
 # FIXME: Il server di dryscape consuma risorse anche se il programma è in sleep
 # FIXME: Aumentare il tempo di attesa
-# TODO: Attraverso un cambionamento uniforme, calcolare una stima di velocità di carica e scarica
+# TODO: Attraverso un campionamento uniforme, calcolare una stima di velocità di carica e scarica
 
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
+
+# Configurazione del server in modo da evitare memory leak
 dryscrape.start_xvfb()
-session = dryscrape.Session()
+server = webkit_server.Server()
+server_conn = webkit_server.ServerConnection(server=server)
+driver = dryscrape.driver.webkit.Driver(connection=server_conn)
+session = dryscrape.Session(driver=driver)
+
 inCarica = False
 
 # Configurazione per access token
 SKILL_CLIENT_ID = 'YOUR_SKILL_CLIENT_ID'
 SKILL_CLIENT_SECRET = 'YOUR_SKILL_CLIENT_SECRET'
 API_TOKEN_URL = 'https://api.amazon.com/auth/O2/token'
-
-
-def stopAttendiStart(secondiAttesa):
-    dryscrape.stop_xvfb()
-    time.sleep(60 * secondiAttesa)
-    dryscrape.start_xvfb()
-    return controllaStato()
 
 
 def controllaStato():
@@ -39,6 +38,7 @@ def controllaStato():
           "] Attendo che venga caricata la pagina ", url)
     time.sleep(15)  # Attendo che venga caricata la pagina
     response = session.body()
+    session.reset()  # Per evitare il memory leak
     print("[", time.asctime(time.localtime(time.time())), "] Ho visitato la pagina")
 
     soup = BeautifulSoup(response, 'html.parser')
@@ -70,7 +70,8 @@ def controllaStato():
             controllaStato()
         print("[", time.asctime(time.localtime(time.time())),
               "] Attendo ", 100 - stato, " minuti")
-        stopAttendiStart(100-stato)  # Attesa dinamica
+        time.sleep(60 * (100-stato))  # Attesa dinamica
+        controllaStato()
     else:
         # TODO: Pensare ad un modo dinamico di calcolare il tempo di attesa in base alla velocità di scaricamento della batteria
         if stato < 11:
@@ -88,7 +89,8 @@ def controllaStato():
             attesa = 100 - (100 - stato)
             print("[", time.asctime(time.localtime(time.time())),
                   "] Attendo ", attesa, " minuti")
-            stopAttendiStart(attesa)  # Attesa dinamica "inversa"
+            time.sleep(60 * attesa)  # Attesa dinamica "inversa"
+            controllaStato()
 
 
 def richiediAccessToken():
@@ -107,4 +109,9 @@ def mandaMessaggioSpegni():
     return 0
 
 
-controllaStato()
+try:
+    controllaStato()
+finally:
+    print("[", time.asctime(time.localtime(time.time())),
+          "] Killo il server")
+    server.kill()  # Altrimenti resta attivo
