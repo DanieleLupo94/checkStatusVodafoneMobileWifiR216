@@ -74,7 +74,7 @@ def controllaStato():
                           'value1': 'Batteria carica. Spegnere la presa'})
             controllaStato()
         print("[", time.asctime(time.localtime(time.time())),
-              "] Attendo ", 100 - stato, " minuti")
+              "] Attendo ", (100 - stato) * rateoCaricamento, " minuti")
         time.sleep(rateoCaricamento * 60 * (100-stato))  # Attesa dinamica
         controllaStato()
     else:
