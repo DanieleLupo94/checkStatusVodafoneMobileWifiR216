@@ -12,6 +12,11 @@ import webkit_server
 # FIXME: Aumentare il tempo di attesa
 # TODO: Attraverso un campionamento uniforme, calcolare una stima di velocità di carica e scarica
 
+# In base all'analisi fatta, decido il rateo con cui si scarica e si carica la batteria
+rateoScaricamento = 1.5
+rateoCaricamento = 2
+
+
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
 
@@ -70,7 +75,7 @@ def controllaStato():
             controllaStato()
         print("[", time.asctime(time.localtime(time.time())),
               "] Attendo ", 100 - stato, " minuti")
-        time.sleep(60 * (100-stato))  # Attesa dinamica
+        time.sleep(rateoCaricamento * 60 * (100-stato))  # Attesa dinamica
         controllaStato()
     else:
         # TODO: Pensare ad un modo dinamico di calcolare il tempo di attesa in base alla velocità di scaricamento della batteria
@@ -87,9 +92,11 @@ def controllaStato():
         else:
             # Ho calcolato in questo modo l'attesa in modo da avere un'attesa massima quando è carica e poi decrescente insieme alla batteria
             attesa = 100 - (100 - stato)
+            attesa = attesa * rateoScaricamento
             print("[", time.asctime(time.localtime(time.time())),
                   "] Attendo ", attesa, " minuti")
-            time.sleep(60 * attesa)  # Attesa dinamica "inversa"
+            # Attesa dinamica "inversa"
+            time.sleep(60 * attesa)
             controllaStato()
 
 
