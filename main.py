@@ -21,7 +21,7 @@ audioSpegni = './spegni_caricabatteria.mp3'
 
 attesaCaricamentoPagina = 30
 
-pathFileLog = "./log"
+pathFileLog = "./log2"
 
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
@@ -67,10 +67,9 @@ def controllaStato():
     imgBatteria = imgBatteria.rsplit('?')[0]
     inCarica = (imgBatteria == 'batteryCharging.gif')
     if (inCarica):
-        inCarica = "true"
+        salvaLog("In carica: true")
     else:
-        inCarica = "false"
-    salvaLog("In carica: " + inCarica)
+        salvaLog("In carica: false")
 
     if inCarica and stato != 100:
         tempoAttesa = rateoCaricamento * (100-stato)
