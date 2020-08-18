@@ -82,7 +82,7 @@ def controllaStato():
         if stato < 11:
             salvaLog("Batteria scarica. Invio la notifica ed attendo 5 minuti.")
 			# Riproduco il file audio in modo che Alexa senta il comando
-            os.system("omxplayer " + audioAccendi)
+            os.system("omxplayer -o local " + audioAccendi)
             # Chiamo il webhook per mandare la notifica
             requests.post(urlWebhook, json={
                           'value1': 'Batteria scarica. Accendere la presa'})
@@ -94,7 +94,7 @@ def controllaStato():
                 requests.post(urlWebhook, json={
                               'value1': 'Batteria carica. Spegnere la presa'})
 				# Riproduco il comando in modo che Alexa possa sentirlo
-                os.system("omxplayer " + audioSpegni)
+                os.system("omxplayer -o local " + audioSpegni)
             # Ho calcolato in questo modo l'attesa in modo da avere un'attesa massima quando è carica e poi decrescente insieme alla batteria
             attesa = 100 - (100 - stato)
             attesa = attesa * rateoScaricamento
