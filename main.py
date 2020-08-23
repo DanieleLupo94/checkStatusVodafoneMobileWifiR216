@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import dryscrape
 import webkit_server
 import os
+import _thread
 
 # TODO: Forse non serve creare una sessione ogni volta
 # TODO: Attraverso un campionamento uniforme, calcolare una stima di velocità di carica e scarica
@@ -15,13 +16,14 @@ import os
 rateoScaricamento = 1.5
 rateoCaricamento = 2
 
-audioAccendi = './accendi_caricabatteria.mp3'
+pathIniziale = "/home/pi/GitProjects/checkStatusVodafoneMobileWifiR216/"
 
-audioSpegni = './spegni_caricabatteria.mp3'
+audioAccendi = pathIniziale + 'accendi_caricabatteria.mp3'
+audioSpegni = pathIniziale + 'spegni_caricabatteria.mp3'
 
-attesaCaricamentoPagina = 30
+attesaCaricamentoPagina = 60
 
-pathFileLog = "./log"
+pathFileLog = pathIniziale + "log"
 
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
@@ -33,11 +35,10 @@ server_conn = webkit_server.ServerConnection(server=server)
 driver = dryscrape.driver.webkit.Driver(connection=server_conn)
 session = dryscrape.Session(driver=driver)
 
-# fileLog = open(pathFileLog,"a+")
-
 inCarica = False
 
 def controllaStato():
+    _thread.start_new_thread(controllaProblema, ())
     salvaLog("Creo la sessione e visito la pagina " + url)
     session = dryscrape.Session()
     session.visit(url)
@@ -84,15 +85,13 @@ def controllaStato():
 			# Riproduco il file audio in modo che Alexa senta il comando
             os.system("omxplayer -o local " + audioAccendi)
             # Chiamo il webhook per mandare la notifica
-            requests.post(urlWebhook, json={
-                          'value1': 'Batteria scarica. Accendere la presa'})
+            requests.post(urlWebhook, json={'value1': 'Batteria scarica. Accendere la presa'})
             time.sleep(60*5)  # Attesa di 5 minuti
             controllaStato()
         else:
             if stato == 100:
 				# Chiamo il webhook per mandare la notifica
-                requests.post(urlWebhook, json={
-                              'value1': 'Batteria carica. Spegnere la presa'})
+                requests.post(urlWebhook, json={'value1': 'Batteria carica. Spegnere la presa'})
 				# Riproduco il comando in modo che Alexa possa sentirlo
                 os.system("omxplayer -o local " + audioSpegni)
             # Ho calcolato in questo modo l'attesa in modo da avere un'attesa massima quando è carica e poi decrescente insieme alla batteria
@@ -116,10 +115,25 @@ def salvaLog(testo):
 	# print(">> ", t)
 	fileLog.close()
 
-try:
-    controllaStato()
-finally:
+def controllaProblema():
+	attesa = 60 * 2
+	time.sleep(attesa)
+	fileLog = open(pathFileLog, "r")
+	lastLine = fileLog.readlines()[-1]
+	fileLog.close()
+	salvaLog('>> Last line: ' + lastLine)
+	if ("Creo la sessione" in lastLine):
+		salvaLog('Rilevato problema')
+		chiudiTutto()
+
+def chiudiTutto():
     salvaLog("Killo il server.")
     # fileLog.close()
     server.kill()  # Altrimenti resta attivo
+    requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})
+
+try:
+    controllaStato()
+finally:
+    chiudiTutto()
 
