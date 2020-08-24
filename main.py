@@ -24,7 +24,7 @@ audioSpegni = pathIniziale + 'spegni_caricabatteria.mp3'
 
 attesaCaricamentoPagina = 60
 
-pathFileLog = pathIniziale + "log2"
+pathFileLog = pathIniziale + "log"
 
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
