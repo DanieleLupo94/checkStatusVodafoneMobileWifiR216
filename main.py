@@ -1,4 +1,5 @@
 import time
+import datetime
 import urllib.request
 import signal
 
@@ -23,7 +24,7 @@ audioSpegni = pathIniziale + 'spegni_caricabatteria.mp3'
 
 attesaCaricamentoPagina = 60
 
-pathFileLog = pathIniziale + "log"
+pathFileLog = pathIniziale + "log2"
 
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
@@ -42,6 +43,7 @@ def controllaStato():
     salvaLog("Creo la sessione e visito la pagina " + url)
     session = dryscrape.Session()
     session.visit(url)
+    # FIXME: Catturare EndOfStreamError()
     salvaLog("Attendo che venga caricata la pagina " + url)
     time.sleep(attesaCaricamentoPagina)  # Attendo che venga caricata la pagina
     response = session.body()
@@ -74,7 +76,8 @@ def controllaStato():
 
     if inCarica and stato != 100:
         tempoAttesa = rateoCaricamento * (100-stato)
-        salvaLog("Attendo " + str(tempoAttesa) + " minuti")
+        ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(tempoAttesa/60), minutes=tempoAttesa%60)
+        salvaLog("Attendo " + str(tempoAttesa) + " minuti (" + ricontrollo.strftime("%x %X") + ")")
         tempoAttesa = tempoAttesa * 60
         time.sleep(tempoAttesa)  # Attesa dinamica
         controllaStato()
@@ -97,8 +100,8 @@ def controllaStato():
             # Ho calcolato in questo modo l'attesa in modo da avere un'attesa massima quando è carica e poi decrescente insieme alla batteria
             attesa = 100 - (100 - stato)
             attesa = attesa * rateoScaricamento
-            attesa = attesa
-            salvaLog("Attendo " + str(attesa) + " minuti")
+            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(attesa/60), minutes=attesa%60)
+            salvaLog("Attendo " + str(attesa) + " minuti (" + ricontrollo.strftime("%x %X")  +")")
             # Attesa dinamica "inversa"
             attesa = attesa * 60
             time.sleep(attesa)
