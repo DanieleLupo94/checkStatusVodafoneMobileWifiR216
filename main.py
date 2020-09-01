@@ -2,6 +2,7 @@ import time
 import datetime
 import urllib.request
 import signal
+from sys import exit
 
 import requests
 from bs4 import BeautifulSoup
@@ -128,6 +129,7 @@ def controllaProblema():
 	if ("Creo la sessione" in lastLine):
 		salvaLog('Rilevato problema')
 		chiudiTutto()
+		exit('Chiudo dal thread')
 
 def chiudiTutto():
     salvaLog("Killo il server.")
