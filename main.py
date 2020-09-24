@@ -12,7 +12,6 @@ import os
 import _thread
 
 # TODO: Forse non serve creare una sessione ogni volta
-# TODO: Attraverso un campionamento uniforme, calcolare una stima di velocità di carica e scarica
 
 # In base all'analisi fatta, decido il rateo con cui si scarica e si carica la batteria
 rateoScaricamento = 1.5
@@ -25,7 +24,8 @@ audioSpegni = pathIniziale + 'spegni_caricabatteria.mp3'
 
 attesaCaricamentoPagina = 60
 
-pathFileLog = pathIniziale + "log"
+# TODO: Far cambiare la data del file di log automaticamente
+pathFileLog = pathIniziale + "log" + (datetime.datetime.now().strftime("%Y%m%e"))
 
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
@@ -40,6 +40,11 @@ session = dryscrape.Session(driver=driver)
 inCarica = False
 
 def controllaStato():
+    # Controllo se c'è la connessione. Se è offline, attendo un minuto e riprovo
+    if not checkConnection():
+        salvaLog("Nessuna connessione. Attendo 1 minuto e ricontrollo.")
+        time.sleep(60)
+        controllaStato()
     _thread.start_new_thread(controllaProblema, ())
     salvaLog("Creo la sessione e visito la pagina " + url)
     session = dryscrape.Session()
@@ -90,13 +95,18 @@ def controllaStato():
             os.system("omxplayer -o local " + audioAccendi)
             # Chiamo il webhook per mandare la notifica
             requests.post(urlWebhook, json={'value1': 'Batteria scarica. Accendere la presa'})
-            time.sleep(60*5)  # Attesa di 5 minuti
+            time.sleep(60*1)  # Attesa di 1 minuto
             controllaStato()
         else:
             if stato == 100:
+                # FIXME: Il dispositivo potrebbe non rispondere quindi bisogna controllare che sia davvero in carica
 				# Chiamo il webhook per mandare la notifica
                 requests.post(urlWebhook, json={'value1': 'Batteria carica. Spegnere la presa'})
 				# Riproduco il comando in modo che Alexa possa sentirlo
+                os.system("omxplayer -o local " + audioSpegni)
+                # TODO fare più sistemato
+                # Ripeto il comando poiché a volte non funziona subito
+                time.sleep(60)
                 os.system("omxplayer -o local " + audioSpegni)
             # Ho calcolato in questo modo l'attesa in modo da avere un'attesa massima quando è carica e poi decrescente insieme alla batteria
             attesa = 100 - (100 - stato)
@@ -126,16 +136,22 @@ def controllaProblema():
 	lastLine = fileLog.readlines()[-1]
 	fileLog.close()
 	salvaLog('>> Last line: ' + lastLine)
-	if ("Creo la sessione" in lastLine):
+	if ("Creo la sessione" in lastLine or "Ho visitato la pagina" in lastLine):
 		salvaLog('Rilevato problema')
-		chiudiTutto()
-		exit('Chiudo dal thread')
+		controllaStato()
 
 def chiudiTutto():
     salvaLog("Killo il server.")
     # fileLog.close()
     server.kill()  # Altrimenti resta attivo
     requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})
+
+def checkConnection(host='http://google.com'):
+    try:
+        urllib.request.urlopen(host) #Python 3.x
+        return True
+    except:
+        return False
 
 try:
     controllaStato()
