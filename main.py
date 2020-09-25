@@ -24,9 +24,6 @@ audioSpegni = pathIniziale + 'spegni_caricabatteria.mp3'
 
 attesaCaricamentoPagina = 60
 
-# TODO: Far cambiare la data del file di log automaticamente
-pathFileLog = pathIniziale + "log" + (datetime.datetime.now().strftime("%Y%m%e"))
-
 url = 'http://192.168.0.1/html/home.htm'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
 
@@ -121,13 +118,14 @@ def controllaStato():
 
 # Salvo il log nel file e lo chiudo subito
 def salvaLog(testo):
-	fileLog = open(pathFileLog,"a+")
-	# Aggiungo il timestamp al log
-	t = "[" + time.asctime(time.localtime(time.time())) + "] " + str(testo)
-	fileLog.write(t)
-	fileLog.write("\n")
-	# print(">> ", t)
-	fileLog.close()
+    pathFileLog = pathIniziale + "log" + (datetime.datetime.now().strftime("%Y%m%e"))
+    fileLog = open(pathFileLog,"a+")
+    # Aggiungo il timestamp al log
+    t = "[" + time.asctime(time.localtime(time.time())) + "] " + str(testo)
+    fileLog.write(t)
+    fileLog.write("\n")
+    # print(">> ", t)
+    fileLog.close()
 
 def controllaProblema():
 	attesa = 60 * 2
