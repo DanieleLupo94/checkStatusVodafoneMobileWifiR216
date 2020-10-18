@@ -37,10 +37,10 @@ session = dryscrape.Session(driver=driver)
 inCarica = False
 
 def controllaStato():
-    # Controllo se c'è la connessione. Se è offline, attendo un minuto e riprovo
+    # Controllo se c'è la connessione. Se è offline, attendo 5 minuti e riprovo
     if not checkConnection():
-        salvaLog("Nessuna connessione. Attendo 1 minuto e ricontrollo.")
-        time.sleep(60)
+        salvaLog("Nessuna connessione. Attendo 5 minuti e ricontrollo.")
+        time.sleep(60 * 5)
         controllaStato()
     _thread.start_new_thread(controllaProblema, ())
     salvaLog("Creo la sessione e visito la pagina " + url)
@@ -118,7 +118,7 @@ def controllaStato():
 
 # Salvo il log nel file e lo chiudo subito
 def salvaLog(testo):
-    pathFileLog = pathIniziale + "log" + (datetime.datetime.now().strftime("%Y%m%e"))
+    pathFileLog = getPathFileLog()
     fileLog = open(pathFileLog,"a+")
     # Aggiungo il timestamp al log
     t = "[" + time.asctime(time.localtime(time.time())) + "] " + str(testo)
@@ -128,15 +128,16 @@ def salvaLog(testo):
     fileLog.close()
 
 def controllaProblema():
-	attesa = 60 * 2
-	time.sleep(attesa)
-	fileLog = open(pathFileLog, "r")
-	lastLine = fileLog.readlines()[-1]
-	fileLog.close()
-	salvaLog('>> Last line: ' + lastLine)
-	if ("Creo la sessione" in lastLine or "Ho visitato la pagina" in lastLine):
-		salvaLog('Rilevato problema')
-		controllaStato()
+    pathFileLog = getPathFileLog()
+    attesa = 60 * 2
+    time.sleep(attesa)
+    fileLog = open(pathFileLog, "r")
+    lastLine = fileLog.readlines()[-1]
+    fileLog.close()
+    salvaLog('>> Last line: ' + lastLine)
+    if ("Creo la sessione" in lastLine or "Ho visitato la pagina" in lastLine):
+        salvaLog('Rilevato problema')
+        controllaStato()
 
 def chiudiTutto():
     salvaLog("Killo il server.")
@@ -150,6 +151,9 @@ def checkConnection(host='http://google.com'):
         return True
     except:
         return False
+
+def getPathFileLog():
+    return pathIniziale + "log" + (datetime.datetime.now().strftime("%Y%m%d"))
 
 try:
     controllaStato()
