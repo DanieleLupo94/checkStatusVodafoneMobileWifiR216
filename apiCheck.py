@@ -1,0 +1,130 @@
+import time
+import datetime
+import urllib.request
+import signal
+from sys import exit
+import xml.etree.ElementTree as ET
+import requests
+from bs4 import BeautifulSoup
+import dryscrape
+import webkit_server
+import os
+import urllib.request
+
+
+# TODO: Forse non serve creare una sessione ogni volta
+
+# In base all'analisi fatta, decido il rateo con cui si scarica e si carica la batteria
+rateoScaricamento = 1.5
+rateoCaricamento = 2
+
+pathIniziale = "/home/pi/GitProjects/checkStatusVodafoneMobileWifiR216/"
+
+audioAccendi = pathIniziale + 'accendi_caricabatteria.mp3'
+audioSpegni = pathIniziale + 'spegni_caricabatteria.mp3'
+
+url = 'http://192.168.0.1/html/launch.htm'
+urlAPI = 'http://192.168.0.1/api/monitoring/status'
+urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
+
+def getPathFileLog():
+    return pathIniziale + "APIlog" + (datetime.datetime.now().strftime("%Y%m%d"))
+
+# Salvo il log nel file e lo chiudo subito
+def salvaLog(testo):
+    pathFileLog = getPathFileLog()
+    fileLog = open(pathFileLog,"a+")
+    # Aggiungo il timestamp al log
+    t = "[" + time.asctime(time.localtime(time.time())) + "] " + str(testo)
+    fileLog.write(t)
+    fileLog.write("\n")
+    # print(">> ", t)
+    fileLog.close()
+
+salvaLog("Avvio tutto")
+dryscrape.start_xvfb()
+server = webkit_server.Server()
+server_conn = webkit_server.ServerConnection(server=server)
+driver = dryscrape.driver.webkit.Driver(connection=server_conn)
+session = dryscrape.Session(driver=driver)
+
+def controlla():
+    if not checkConnection():
+        time.sleep(60 * 5) # Attendo 5 minuti
+        controlla()
+    # Visito la pagina principale per prendere il token
+    session.visit(url)
+    response = session.body()
+    # print(str(response))
+    # Visito la pagina delle API con tutte le informazioni
+    session.visit(urlAPI)
+    # Leggo la risposta, che è in XML
+    response = session.body()
+    # TODO: Controllare nel caso in cui non avessi il token
+    # print(str(response))
+
+    # Attraverso il parser recupero le informazioni dall'XML
+    root = ET.fromstring(response)
+    b = root.find('body')
+    response = b.find('response')
+    segnale = response.find('signalicon').text
+    inCarica = response.find('batterystatus').text
+    # Converto in boolean per usarlo meglio nell'if
+    if int(inCarica) == 0:
+        inCarica = False
+    else:
+        inCarica = True
+    
+    livelloBatteria = response.find('batterypercent').text
+    
+    salvaLog("Segnale: " + segnale + ", batteria: " + livelloBatteria + ", dc: " + str(inCarica))
+    
+    livelloBatteria = int(livelloBatteria)
+    
+    if inCarica:
+        if livelloBatteria == 100:
+            salvaLog("Batteria carica")
+            requests.post(urlWebhook, json={'value1': 'Batteria carica. Spegnere la presa'})
+            os.system("omxplayer -o local " + audioSpegni)
+            controlla()
+        else:
+            tempoAttesa = rateoCaricamento * (100 - livelloBatteria)
+            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(tempoAttesa/60), minutes=tempoAttesa%60)
+            salvaLog("Attendo " + str(tempoAttesa) + " minuti (" + ricontrollo.strftime("%x %X")  +")")
+            tempoAttesa = tempoAttesa * 60
+            time.sleep(tempoAttesa)
+            controlla()
+    else:
+        if livelloBatteria < 11:
+            salvaLog("Batteria scarica")
+            requests.post(urlWebhook, json={'value1': 'Batteria scarica. Accendere la presa'})
+            os.system("omxplayer -o local " + audioAccendi)
+            controlla()
+        else:
+            attesa = 100 - (100 - livelloBatteria)
+            attesa = attesa * rateoScaricamento
+            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(attesa/60), minutes=attesa%60)
+            salvaLog("Attendo " + str(attesa) + " minuti (" + ricontrollo.strftime("%x %X")  +")")
+            attesa = attesa * 60
+            time.sleep(attesa)
+            controlla()
+
+def chiudiTutto():
+    salvaLog("Killo il server.")
+    # fileLog.close()
+    server.kill()  # Altrimenti resta attivo
+    requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})
+
+def checkConnection(host='http://google.com'):
+    try:
+        urllib.request.urlopen(host) #Python 3.x
+        return True
+    except:
+        return False
+  
+try:
+    controlla()
+finally:
+    chiudiTutto()
+
+
