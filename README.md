@@ -1,6 +1,7 @@
 # checkStatusVodafoneMobileWifiR216
 Programma in Python che fa scraping sulla home del dispositivo e controlla la percentuale della batteria.
 Dopo vari tentativi e problemi, mi sono spostato sul rasperry. Vedi la storia per saperne di più.
+Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuperare le informazioni.
 
 ## Occorrente
  - requests (pip install requests);
@@ -13,7 +14,7 @@ Dopo vari tentativi e problemi, mi sono spostato sul rasperry. Vedi la storia pe
  - account su https://ifttt.com ed app mobile per creare e modificare le istruzioni (solo se si vuole la notifica).
 
 ## Utilizzo
-Eseguire lo script python con la versione di python 3.5 o superiore (vedi dryscrape e qt4).
+Eseguire lo script python apiCheck.py con la versione di python 3.5 o superiore (vedi dryscrape e qt4).
 
 ## Storia
 Dopo aver contattato l'assistenza Amazon per dei problemi coi permessi per creare la skill Alexa, mi hanno detto che quello che voglio fare non si può fare.
@@ -24,6 +25,7 @@ Dato che per Windows è un casino installare qt, installo un player via shell su
 Dopo aver installato il player sulla macchina Ubuntu, continua a non trovare la periferica di audio quindi mi sono spostato sul raspberry.
 Una volta sul raspberry, l'unico problema riscontrato è stato installare qt5. Dato che anche qt4 ha il qmake (che serve a dryscrape), ho installato qt4 con un solo comando.
 Una volta provato il codice, ho inserito un service all'avvio che si occupa di mantenere in vita lo script.
+Dopo alcuni mesi ho analizzato le chiamate http effettuate dalla pagina principale per recuperare le informazioni. In questo modo ho trovato la chiamata che permette di ricevere molte informazioni tra cui: se è in carica, lo stato della batteria ed il livello del segnale. Ho riscritto il codice, facendo un po' di pulizia, utilizzando 2 chiamate fondamentali: la prima permette di ricevere il token mentre la seconda riceve le informazioni richieste. 
 EOStory
  
 ## Altre fonti
@@ -33,4 +35,4 @@ EOStory
  - ho utilizzato Pyhton3.5;
  - il tutto gira su un Raspberry 3B+ con Raspian Jessie;
  - utilizzo delle casse esterne collegate al raspberry;
- - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha (quando non carica in tempo la pagina oppure non c'è connessione).
+ - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha (quando non carica in tempo la pagina ~~oppure non c'è connessione~~).
