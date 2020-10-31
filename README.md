@@ -1,12 +1,12 @@
 # checkStatusVodafoneMobileWifiR216
 Programma in Python che fa scraping sulla home del dispositivo e controlla la percentuale della batteria.
 Dopo vari tentativi e problemi, mi sono spostato sul rasperry. Vedi la storia per saperne di più.
-Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuperare le informazioni.
+Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuperare le informazioni quindi _non viene più fatto scraping_.
 
 ## Occorrente
  - requests (pip install requests);
  - bs4 (pip install bs4);
- - dryscrape (https://github.com/niklasb/dryscrape), poiché il JS elabora lo stato della batteria;
+ - dryscrape (https://github.com/niklasb/dryscrape), poiché ~~il JS elabora lo stato della batteria~~ serve la sessione per mantenere il token;
  - <del>qt (https://www.qt.io/offline-installers) per installare dryscrape;</del>
  - qt4 (https://wiki.qt.io/Apt-get_Qt4_on_the_Raspberry_Pi);
  - webkit (https://github.com/niklasb/webkit-server);
@@ -14,7 +14,7 @@ Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuper
  - account su https://ifttt.com ed app mobile per creare e modificare le istruzioni (solo se si vuole la notifica).
 
 ## Utilizzo
-Eseguire lo script python apiCheck.py con la versione di python 3.5 o superiore (vedi dryscrape e qt4).
+Eseguire lo script python _apiCheck.py_ con la versione di python 3.5 o superiore (vedi dryscrape e qt4).
 
 ## Storia
 Dopo aver contattato l'assistenza Amazon per dei problemi coi permessi per creare la skill Alexa, mi hanno detto che quello che voglio fare non si può fare.
