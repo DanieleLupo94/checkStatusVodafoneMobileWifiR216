@@ -9,7 +9,15 @@ from bs4 import BeautifulSoup
 import dryscrape
 import webkit_server
 import os
-import urllib.request
+import smtplib
+import ssl
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from mimetypes import guess_type
+from email.encoders import encode_base64
+from getpass import getpass
 
 
 # TODO: Forse non serve creare una sessione ogni volta
@@ -27,11 +35,71 @@ url = 'http://192.168.0.1/html/launch.htm'
 urlAPI = 'http://192.168.0.1/api/monitoring/status'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
 
+fileOpzioniEmail = open('opzioniEmail')
+
+opzioni = {}
+
+for line in fileOpzioniEmail.read().splitlines():
+  opzioni[line.split(' = ')[0]] = line.split(' = ')[1]
+
+class Email(object):
+    ''' A class for send a mail (with attachment) through an 
+        SSL SMTP server. The test code work on Raspberry PI 3B+
+    '''
+
+    def __init__(self, from_address, to_address, subject, message, image=None):
+        # Email data
+        self.from_address = from_address
+        self.to_address = to_address
+        
+        # Create the email object
+        self.email = MIMEMultipart()
+
+        self.email['From'] = from_address
+        self.email['To'] = to_address
+        self.email['Subject'] = subject
+
+        text = MIMEText(message, 'plain')
+        self.email.attach(text)
+
+        # Manage attachments
+        if image != None:
+            attachment = MIMEBase('image','jpg')
+            attachment.set_payload(image)
+            encode_base64(attachment)
+            attachment.add_header('Content-Disposition', 
+                                   'attachment', 
+                                   "image.jpg")
+            
+            self.email.attach(attachment)
+
+        # Put all email contents in a string
+        self.message = self.email.as_string()
+
+    def send(self, username, password):
+        # Server data
+        server = opzioni['MAIL_SERVER']
+        port = opzioni['MAIL_PORT']
+        
+        # Connection
+        context = ssl.create_default_context()
+        connection = smtplib.SMTP_SSL(server, port, context=context)
+        connection.login(username, password)
+
+        # Send the message
+        connection.sendmail(self.from_address, 
+                            self.to_address, 
+                            self.message)
+        
+        # Close
+        connection.close()
+
+
 def getPathFileLog():
     return pathIniziale + "APIlog" + (datetime.datetime.now().strftime("%Y%m%d"))
 
 # Salvo il log nel file e lo chiudo subito
-def salvaLog(testo):
+def salvaLog(testo, conEmail = False):
     pathFileLog = getPathFileLog()
     fileLog = open(pathFileLog,"a+")
     # Aggiungo il timestamp al log
@@ -40,6 +108,9 @@ def salvaLog(testo):
     fileLog.write("\n")
     # print(">> ", t)
     fileLog.close()
+    if conEmail:
+        email = Email(opzioni['FROM_ADDRESS'], opzioni['TO_ADDRESS'], "Monitoring modem wifi", t)
+        email.send(opzioni['MAIL_USER'], opzioni['MAIL_PASSWORD'])
 
 salvaLog("Avvio tutto")
 dryscrape.start_xvfb()
@@ -77,13 +148,13 @@ def controlla():
     
     livelloBatteria = response.find('batterypercent').text
     
-    salvaLog("Segnale: " + segnale + ", batteria: " + livelloBatteria + ", dc: " + str(inCarica))
+    salvaLog("Segnale: " + segnale + ", batteria: " + livelloBatteria + ", dc: " + str(inCarica), True)
     
     livelloBatteria = int(livelloBatteria)
     
     if inCarica:
         if livelloBatteria == 100:
-            salvaLog("Batteria carica")
+            salvaLog("Batteria carica", True)
             requests.post(urlWebhook, json={'value1': 'Batteria carica. Spegnere la presa'})
             os.system("omxplayer -o local " + audioSpegni)
             controlla()
@@ -96,7 +167,7 @@ def controlla():
             controlla()
     else:
         if livelloBatteria < 11:
-            salvaLog("Batteria scarica")
+            salvaLog("Batteria scarica", True)
             requests.post(urlWebhook, json={'value1': 'Batteria scarica. Accendere la presa'})
             os.system("omxplayer -o local " + audioAccendi)
             controlla()
@@ -110,7 +181,7 @@ def controlla():
             controlla()
 
 def chiudiTutto():
-    salvaLog("Killo il server.")
+    salvaLog("Killo il server.", True)
     # fileLog.close()
     server.kill()  # Altrimenti resta attivo
     requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})

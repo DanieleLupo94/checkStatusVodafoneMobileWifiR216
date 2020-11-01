@@ -1,0 +1,6 @@
+MAIL_SERVER = smtps.aruba.it
+MAIL_PORT = 465
+FROM_ADDRESS = email@from.it
+TO_ADDRESS = email@to.it
+MAIL_USER = email@user.it
+MAIL_PASSWORD = P4ssw0rdUs3r
