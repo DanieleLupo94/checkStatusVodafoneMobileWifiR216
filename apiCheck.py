@@ -152,7 +152,7 @@ def controlla():
     segnale = response.find('signalicon').text
     
     # Controllo se la presa è accesa per determinare se è in carica
-    plug, ip = getPresa();
+    plug, ip = getPresa()
     salvaLog("Presa " + plug.name + ", ip " + ip + ", is_on " + str(plug.is_on))
     inCarica = plug.is_on
     
