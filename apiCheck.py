@@ -19,6 +19,8 @@ from mimetypes import guess_type
 from email.encoders import encode_base64
 from getpass import getpass
 
+# API smart plug kasa
+from tplink_smartplug import SmartPlug
 
 # TODO: Forse non serve creare una sessione ogni volta
 
@@ -36,11 +38,20 @@ urlAPI = 'http://192.168.0.1/api/monitoring/status'
 urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
 
 fileOpzioniEmail = open('opzioniEmail')
-
 opzioni = {}
-
 for line in fileOpzioniEmail.read().splitlines():
   opzioni[line.split(' = ')[0]] = line.split(' = ')[1]
+
+baseIp = '192.168.0.'
+
+def getPresa():
+    for x in range(100,110):
+        try:
+            plug = SmartPlug(baseIp + str(x))
+            plug.name
+            return plug, (baseIp + str(x))
+        except:
+            continue
 
 class Email(object):
     ''' A class for send a mail (with attachment) through an 
@@ -139,16 +150,15 @@ def controlla():
     b = root.find('body')
     response = b.find('response')
     segnale = response.find('signalicon').text
-    inCarica = response.find('batterystatus').text
-    # Converto in boolean per usarlo meglio nell'if
-    if int(inCarica) == 0:
-        inCarica = False
-    else:
-        inCarica = True
+    
+    # Controllo se la presa è accesa per determinare se è in carica
+    plug, ip = getPresa();
+    salvaLog("Presa " + plug.name + ", ip " + ip + ", is_on " + str(plug.is_on))
+    inCarica = plug.is_on
     
     livelloBatteria = response.find('batterypercent').text
     
-    salvaLog("Segnale: " + segnale + ", batteria: " + livelloBatteria + ", dc: " + str(inCarica), True)
+    salvaLog("Segnale: " + segnale + ", batteria: " + livelloBatteria)
     
     livelloBatteria = int(livelloBatteria)
     
@@ -156,7 +166,8 @@ def controlla():
         if livelloBatteria == 100:
             salvaLog("Batteria carica", True)
             requests.post(urlWebhook, json={'value1': 'Batteria carica. Spegnere la presa'})
-            os.system("omxplayer -o local " + audioSpegni)
+            # os.system("omxplayer -o local " + audioSpegni)
+            plug.turn_off()
             controlla()
         else:
             tempoAttesa = rateoCaricamento * (100 - livelloBatteria)
@@ -169,7 +180,8 @@ def controlla():
         if livelloBatteria < 11:
             salvaLog("Batteria scarica", True)
             requests.post(urlWebhook, json={'value1': 'Batteria scarica. Accendere la presa'})
-            os.system("omxplayer -o local " + audioAccendi)
+            # os.system("omxplayer -o local " + audioAccendi)
+            plug.turn_on()
             controlla()
         else:
             attesa = 100 - (100 - livelloBatteria)
