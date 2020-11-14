@@ -5,15 +5,36 @@ Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuper
 
 ## Occorrente
  - Presa TP-Link HS1xx;
- - requests (pip install requests);
- - bs4 (pip install bs4);
- - dryscrape (https://github.com/niklasb/dryscrape), poiché ~~il JS elabora lo stato della batteria~~ serve la sessione per mantenere il token;
- - <del>qt (https://www.qt.io/offline-installers) per installare dryscrape;</del>
+ - Python 3.5^;
+ - requests;
+ - bs4;
  - qt4 (https://wiki.qt.io/Apt-get_Qt4_on_the_Raspberry_Pi);
- - webkit (https://github.com/niklasb/webkit-server);
- - https://stackoverflow.com/questions/38788816/pip-install-dryscrape-fails-with-error-errno-2-no-such-file-or-directory-s per i problemi durante l'installazione del webkit;
+ - dryscrape (https://github.com/niklasb/dryscrape), poiché serve la sessione per mantenere il token;
  - account su https://ifttt.com ed app mobile per creare e modificare le istruzioni (solo se si vuole la notifica);
  - plugin python per gestire la presa TP-Link (ho usato HS100) https://github.com/vrachieru/tplink-smartplug-api.
+ 
+## Installazione
+Modulo requests
+```
+pip3 install requests
+```
+Modulo bs4
+```
+pip3 install bs4
+```
+Qt4
+```
+sudo apt-get install qt4-dev-tools qtcreator
+```
+Dryscrape
+```
+sudo apt-get install qt5-default libqt5webkit5-dev build-essential python-lxml xvfb
+pip3 install dryscrape
+```
+Plugin Python per le API della presa wifi
+```
+pip3 install git+https://github.com/vrachieru/tplink-smartplug-api.git
+```
 
 ## Utilizzo
 Eseguire lo script python _apiCheck.py_ con la versione di python 3.5 o superiore (vedi dryscrape e qt4).
@@ -35,7 +56,6 @@ EOStory
  - esempio di utilizzo di dryscrape (https://stackoverflow.com/questions/8049520/web-scraping-javascript-page-with-python).
 
 ## Note
- - ho utilizzato Pyhton3.5;
- - il tutto gira su un Raspberry 3B+ con Raspian Jessie;
- - <del>utilizzo delle casse esterne collegate al raspberry</del>;
- - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha (quando non riceve il token <del>non carica in tempo la pagina</del> ~~oppure non c'è connessione~~).
+ - ho utilizzato Pyhton3.5 inizialmente e poi 3.7;
+ - il tutto gira su un Raspberry 3B+ con Raspian Jessie e poi Raspbian GNU/Linux 10 (buster);
+ - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha (quando non riceve il token).
