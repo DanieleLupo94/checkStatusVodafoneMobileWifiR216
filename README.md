@@ -9,7 +9,7 @@ Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuper
  - requests;
  - bs4;
  - qt4 (https://wiki.qt.io/Apt-get_Qt4_on_the_Raspberry_Pi);
- - dryscrape (https://github.com/niklasb/dryscrape), poiché ~~il JS elabora lo stato della batteria~~ serve la sessione per mantenere il token;
+ - dryscrape (https://github.com/niklasb/dryscrape), poiché serve la sessione per mantenere il token;
  - account su https://ifttt.com ed app mobile per creare e modificare le istruzioni (solo se si vuole la notifica);
  - plugin python per gestire la presa TP-Link (ho usato HS100) https://github.com/vrachieru/tplink-smartplug-api.
  
