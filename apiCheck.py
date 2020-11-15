@@ -195,8 +195,9 @@ def controlla():
 def chiudiTutto():
     salvaLog("Killo il server.", True)
     # fileLog.close()
-    server.kill()  # Altrimenti resta attivo
+    # server.kill()  # Altrimenti resta attivo
     requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})
+    main()
 
 def checkConnection(host='http://google.com'):
     try:
@@ -204,10 +205,13 @@ def checkConnection(host='http://google.com'):
         return True
     except:
         return False
-  
-try:
-    controlla()
-finally:
-    chiudiTutto()
+
+def main():    
+    try:
+        controlla()
+    finally:
+        chiudiTutto()
 
 
+
+main()
