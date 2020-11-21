@@ -1,0 +1,9 @@
+rateoScaricamento = 1.5
+rateoCaricamento = 2
+pathIniziale = /home/pi/GitProjects/checkStatusVodafoneMobileWifiR216/
+audioAccendi = accendi_caricabatteria.mp3
+audioSpegni = spegni_caricabatteria.mp3
+url = http://192.168.0.1/html/launch.htm
+urlAPI = http://192.168.0.1/api/monitoring/status
+urlWebhook = https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V
+baseIp = 192.168.0.
