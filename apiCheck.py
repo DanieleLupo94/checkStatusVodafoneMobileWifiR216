@@ -22,27 +22,35 @@ from getpass import getpass
 # API smart plug kasa
 from tplink_smartplug import SmartPlug
 
-# TODO: Forse non serve creare una sessione ogni volta
-
-# In base all'analisi fatta, decido il rateo con cui si scarica e si carica la batteria
-rateoScaricamento = 1.5
-rateoCaricamento = 2
-
-pathIniziale = "/home/pi/GitProjects/checkStatusVodafoneMobileWifiR216/"
-
-audioAccendi = pathIniziale + 'accendi_caricabatteria.mp3'
-audioSpegni = pathIniziale + 'spegni_caricabatteria.mp3'
-
-url = 'http://192.168.0.1/html/launch.htm'
-urlAPI = 'http://192.168.0.1/api/monitoring/status'
-urlWebhook = 'https://maker.ifttt.com/trigger/CheckBatteria/with/key/crgmhm7kuG2plVg8e7W1_V'
+fileConfig = open('config')
+configurazioni = {}
+for line in fileConfig.read().splitlines():
+  configurazioni[line.split(' = ')[0]] = line.split(' = ')[1]
 
 fileOpzioniEmail = open('opzioniEmail')
 opzioni = {}
 for line in fileOpzioniEmail.read().splitlines():
   opzioni[line.split(' = ')[0]] = line.split(' = ')[1]
 
-baseIp = '192.168.0.'
+# Path che va anteposta davanti alle altre path
+pathIniziale = configurazioni['pathIniziale']
+
+# File usati per il comando audio (che ora è commentato)
+audioAccendi = pathIniziale + configurazioni['audioAccendi']
+audioSpegni = pathIniziale + configurazioni['audioSpegni']
+
+# Pagina principale del modem
+url = configurazioni['url']
+# Pagina delle API sullo status
+urlAPI = configurazioni['urlAPI']
+# URL webhook di IFTTT per le notifiche
+urlWebhook = configurazioni['urlWebhook']
+# Parte iniziale degli IP con cui cercheremo la presa nella rete
+baseIp = configurazioni['baseIp']
+
+# Velocità con cui si carica/scarica la batteria
+rateoScaricamento = float(configurazioni['rateoScaricamento'])
+rateoCaricamento = float(configurazioni['rateoCaricamento'])
 
 def getPresa():
     for x in range(100,110):
