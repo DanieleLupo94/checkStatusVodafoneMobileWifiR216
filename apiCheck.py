@@ -49,11 +49,13 @@ urlWebhook = configurazioni['urlWebhook']
 baseIp = configurazioni['baseIp']
 
 # Velocità con cui si carica/scarica la batteria
-rateoScaricamento = float(configurazioni['rateoScaricamento'])
-rateoCaricamento = float(configurazioni['rateoCaricamento'])
+percentualeScaricamentoAlMinuto = float(configurazioni['percentualeScaricamentoAlMinuto'])
+percentualeCaricamentoAlMinuto = float(configurazioni['percentualeCaricamentoAlMinuto'])
+rateoCaricamento = 3.5
+rateoScaricamento = 4
 
 def getPresa():
-    for x in range(100,110):
+    for x in range(100,120):
         try:
             plug = SmartPlug(baseIp + str(x))
             plug.name
@@ -178,7 +180,10 @@ def controlla():
             plug.turn_off()
             controlla()
         else:
-            tempoAttesa = rateoCaricamento * (100 - livelloBatteria)
+            # Si carica dello 0,45% al minuto
+            tempoAttesa = 100 - livelloBatteria
+            tempoAttesa = tempoAttesa / percentualeCaricamentoAlMinuto
+            tempoAttesa = int(tempoAttesa)
             ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(tempoAttesa/60), minutes=tempoAttesa%60)
             salvaLog("Attendo " + str(tempoAttesa) + " minuti (" + ricontrollo.strftime("%x %X")  +")")
             tempoAttesa = tempoAttesa * 60
@@ -192,8 +197,12 @@ def controlla():
             plug.turn_on()
             controlla()
         else:
-            attesa = 100 - (100 - livelloBatteria)
-            attesa = attesa * rateoScaricamento
+            # Si scarica dello 0,35% al minuto -> (batteria restante)/0,35 = minuti restanti
+            # Batteria restante
+            attesa = livelloBatteria - 13
+            # Tempo restante fino al 13% di batteria
+            attesa = attesa / percentualeScaricamentoAlMinuto
+            attesa = int(attesa)
             ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(attesa/60), minutes=attesa%60)
             salvaLog("Attendo " + str(attesa) + " minuti (" + ricontrollo.strftime("%x %X")  +")")
             attesa = attesa * 60

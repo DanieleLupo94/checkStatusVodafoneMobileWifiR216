@@ -1,5 +1,5 @@
-rateoScaricamento = 1.5
-rateoCaricamento = 2
+percentualeScaricamentoAlMinuto = 0.45
+percentualeCaricamentoAlMinuto = 0.45
 pathIniziale = /home/pi/GitProjects/checkStatusVodafoneMobileWifiR216/
 audioAccendi = accendi_caricabatteria.mp3
 audioSpegni = spegni_caricabatteria.mp3
