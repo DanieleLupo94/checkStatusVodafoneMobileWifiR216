@@ -22,40 +22,57 @@ from getpass import getpass
 # API smart plug kasa
 from tplink_smartplug import SmartPlug
 
-fileConfig = open('config')
-configurazioni = {}
-for line in fileConfig.read().splitlines():
-  configurazioni[line.split(' = ')[0]] = line.split(' = ')[1]
+# Inizializzo tutte le variabili
+# Path che va anteposta davanti alle altre path
+pathIniziale = ""
+# File usati per il comando audio (che ora è commentato)
+audioAccendi = ""
+audioSpegni = ""
+# Pagina principale del modem
+url = ""
+# Pagina delle API sullo status
+urlAPI = ""
+# URL webhook di IFTTT per le notifiche
+urlWebhook = ""
+# Parte iniziale degli IP con cui cercheremo la presa nella rete
+baseIp = ""
+# Velocità con cui si carica/scarica la batteria
+percentualeScaricamentoAlMinuto = ""
+percentualeCaricamentoAlMinuto = ""
+# Sessione di dryscrape
+session = None
+
+def caricaConfigurazioni():
+    fileConfig = open('config')
+    configurazioni = {}
+    for line in fileConfig.read().splitlines():
+        configurazioni[line.split(' = ')[0]] = line.split(' = ')[1]
+    global pathIniziale
+    pathIniziale = configurazioni['pathIniziale']
+    global audioAccendi
+    audioAccendi = pathIniziale + configurazioni['audioAccendi']
+    global audioSpegni
+    audioSpegni = pathIniziale + configurazioni['audioSpegni']
+    global url
+    url = configurazioni['url']
+    global urlAPI
+    urlAPI = configurazioni['urlAPI']
+    global urlWebhook
+    urlWebhook = configurazioni['urlWebhook']
+    global baseIp
+    baseIp = configurazioni['baseIp']
+    global percentualeScaricamentoAlMinuto
+    percentualeScaricamentoAlMinuto = float(configurazioni['percentualeScaricamentoAlMinuto'])
+    global percentualeCaricamentoAlMinuto
+    percentualeCaricamentoAlMinuto = float(configurazioni['percentualeCaricamentoAlMinuto'])
 
 fileOpzioniEmail = open('opzioniEmail')
 opzioni = {}
 for line in fileOpzioniEmail.read().splitlines():
-  opzioni[line.split(' = ')[0]] = line.split(' = ')[1]
-
-# Path che va anteposta davanti alle altre path
-pathIniziale = configurazioni['pathIniziale']
-
-# File usati per il comando audio (che ora è commentato)
-audioAccendi = pathIniziale + configurazioni['audioAccendi']
-audioSpegni = pathIniziale + configurazioni['audioSpegni']
-
-# Pagina principale del modem
-url = configurazioni['url']
-# Pagina delle API sullo status
-urlAPI = configurazioni['urlAPI']
-# URL webhook di IFTTT per le notifiche
-urlWebhook = configurazioni['urlWebhook']
-# Parte iniziale degli IP con cui cercheremo la presa nella rete
-baseIp = configurazioni['baseIp']
-
-# Velocità con cui si carica/scarica la batteria
-percentualeScaricamentoAlMinuto = float(configurazioni['percentualeScaricamentoAlMinuto'])
-percentualeCaricamentoAlMinuto = float(configurazioni['percentualeCaricamentoAlMinuto'])
-rateoCaricamento = 3.5
-rateoScaricamento = 4
+    opzioni[line.split(' = ')[0]] = line.split(' = ')[1]
 
 def getPresa():
-    for x in range(100,120):
+    for x in range(100, 120):
         try:
             plug = SmartPlug(baseIp + str(x))
             plug.name
@@ -72,7 +89,7 @@ class Email(object):
         # Email data
         self.from_address = from_address
         self.to_address = to_address
-        
+
         # Create the email object
         self.email = MIMEMultipart()
 
@@ -85,13 +102,13 @@ class Email(object):
 
         # Manage attachments
         if image != None:
-            attachment = MIMEBase('image','jpg')
+            attachment = MIMEBase('image', 'jpg')
             attachment.set_payload(image)
             encode_base64(attachment)
-            attachment.add_header('Content-Disposition', 
-                                   'attachment', 
-                                   "image.jpg")
-            
+            attachment.add_header('Content-Disposition',
+                                  'attachment',
+                                  "image.jpg")
+
             self.email.attach(attachment)
 
         # Put all email contents in a string
@@ -101,28 +118,28 @@ class Email(object):
         # Server data
         server = opzioni['MAIL_SERVER']
         port = opzioni['MAIL_PORT']
-        
+
         # Connection
         context = ssl.create_default_context()
         connection = smtplib.SMTP_SSL(server, port, context=context)
         connection.login(username, password)
 
         # Send the message
-        connection.sendmail(self.from_address, 
-                            self.to_address, 
+        connection.sendmail(self.from_address,
+                            self.to_address,
                             self.message)
-        
+
         # Close
         connection.close()
 
-
+# Compone la path del file di log e la restituisce
 def getPathFileLog():
     return pathIniziale + "APIlog" + (datetime.datetime.now().strftime("%Y%m%d"))
 
 # Salvo il log nel file e lo chiudo subito
-def salvaLog(testo, conEmail = False):
+def salvaLog(testo, conEmail=False):
     pathFileLog = getPathFileLog()
-    fileLog = open(pathFileLog,"a+")
+    fileLog = open(pathFileLog, "a+")
     # Aggiungo il timestamp al log
     t = "[" + time.asctime(time.localtime(time.time())) + "] " + str(testo)
     fileLog.write(t)
@@ -130,20 +147,16 @@ def salvaLog(testo, conEmail = False):
     # print(">> ", t)
     fileLog.close()
     if conEmail:
-        email = Email(opzioni['FROM_ADDRESS'], opzioni['TO_ADDRESS'], "Monitoring modem wifi", t)
+        email = Email(opzioni['FROM_ADDRESS'],
+                      opzioni['TO_ADDRESS'], "Monitoring modem wifi", t)
         email.send(opzioni['MAIL_USER'], opzioni['MAIL_PASSWORD'])
-
-salvaLog("Avvio tutto")
-dryscrape.start_xvfb()
-server = webkit_server.Server()
-server_conn = webkit_server.ServerConnection(server=server)
-driver = dryscrape.driver.webkit.Driver(connection=server_conn)
-session = dryscrape.Session(driver=driver)
 
 def controlla():
     if not checkConnection():
-        time.sleep(60 * 5) # Attendo 5 minuti
+        time.sleep(60 * 5)  # Attendo 5 minuti
         controlla()
+    # Ricarico le configurazioni per aggiornare, eventualmente, i parametri del caricamento/scaricamento
+    caricaConfigurazioni()
     # Visito la pagina principale per prendere il token
     session.visit(url)
     response = session.body()
@@ -160,22 +173,24 @@ def controlla():
     b = root.find('body')
     response = b.find('response')
     segnale = response.find('signalicon').text
-    
+
     # Controllo se la presa è accesa per determinare se è in carica
     plug, ip = getPresa()
-    salvaLog("Presa " + plug.name + ", ip " + ip + ", is_on " + str(plug.is_on))
+    salvaLog("Presa " + plug.name + ", ip " +
+             ip + ", is_on " + str(plug.is_on))
     inCarica = plug.is_on
-    
+
     livelloBatteria = response.find('batterypercent').text
-    
+
     salvaLog("Segnale: " + segnale + ", batteria: " + livelloBatteria)
-    
+
     livelloBatteria = int(livelloBatteria)
-    
+
     if inCarica:
         if livelloBatteria == 100:
             salvaLog("Batteria carica", True)
-            requests.post(urlWebhook, json={'value1': 'Batteria carica. Spegnere la presa'})
+            requests.post(urlWebhook, json={
+                          'value1': 'Batteria carica. Spegnere la presa'})
             # os.system("omxplayer -o local " + audioSpegni)
             plug.turn_off()
             controlla()
@@ -184,15 +199,18 @@ def controlla():
             tempoAttesa = 100 - livelloBatteria
             tempoAttesa = tempoAttesa / percentualeCaricamentoAlMinuto
             tempoAttesa = int(tempoAttesa)
-            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(tempoAttesa/60), minutes=tempoAttesa%60)
-            salvaLog("Attendo " + str(tempoAttesa) + " minuti (" + ricontrollo.strftime("%x %X")  +")")
+            ricontrollo = datetime.datetime.now(
+            ) + datetime.timedelta(hours=int(tempoAttesa/60), minutes=tempoAttesa % 60)
+            salvaLog("Attendo " + str(tempoAttesa) +
+                     " minuti (" + ricontrollo.strftime("%x %X") + ")")
             tempoAttesa = tempoAttesa * 60
             time.sleep(tempoAttesa)
             controlla()
     else:
         if livelloBatteria < 11:
             salvaLog("Batteria scarica", True)
-            requests.post(urlWebhook, json={'value1': 'Batteria scarica. Accendere la presa'})
+            requests.post(urlWebhook, json={
+                          'value1': 'Batteria scarica. Accendere la presa'})
             # os.system("omxplayer -o local " + audioAccendi)
             plug.turn_on()
             controlla()
@@ -203,32 +221,44 @@ def controlla():
             # Tempo restante fino al 13% di batteria
             attesa = attesa / percentualeScaricamentoAlMinuto
             attesa = int(attesa)
-            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(attesa/60), minutes=attesa%60)
-            salvaLog("Attendo " + str(attesa) + " minuti (" + ricontrollo.strftime("%x %X")  +")")
+            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(attesa/60),
+                                                                       minutes=attesa % 60)
+            salvaLog("Attendo " + str(attesa) +
+                     " minuti (" + ricontrollo.strftime("%x %X") + ")")
             attesa = attesa * 60
             time.sleep(attesa)
             controlla()
+
 
 def chiudiTutto():
     salvaLog("Killo il server.", True)
     # fileLog.close()
     # server.kill()  # Altrimenti resta attivo
-    requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})
+    requests.post(urlWebhook, json={
+                  'value1': 'Qualquadra non cosa. Killo il server'})
     main()
+
 
 def checkConnection(host='http://google.com'):
     try:
-        urllib.request.urlopen(host) #Python 3.x
+        urllib.request.urlopen(host)  # Python 3.x
         return True
     except:
         return False
 
-def main():    
+
+def main():
+    caricaConfigurazioni()
+    salvaLog("Avvio tutto")
+    dryscrape.start_xvfb()
+    server = webkit_server.Server()
+    server_conn = webkit_server.ServerConnection(server=server)
+    driver = dryscrape.driver.webkit.Driver(connection=server_conn)
+    global session
+    session = dryscrape.Session(driver=driver)
     try:
         controlla()
     finally:
         chiudiTutto()
-
-
 
 main()

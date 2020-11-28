@@ -1,4 +1,5 @@
  ## TODO
+  - cercare prima all'ultimo indirizzo conosciuto della presa (fileLog) e poi provare col brute force;
   - controllare la ricezione del token;
   - controllare la gestione della memoria;
   - continuare dall'attesa precedente in caso di riavvio (attualmente ricalcola l'attesa dopo un riavvio anche se stava già aspettando);
