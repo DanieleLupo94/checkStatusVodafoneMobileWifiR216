@@ -71,7 +71,19 @@ opzioni = {}
 for line in fileOpzioniEmail.read().splitlines():
     opzioni[line.split(' = ')[0]] = line.split(' = ')[1]
 
-def getPresa():
+def recuperaUltimoIpConosciutoPresa():
+    pathFileLog = getPathFileLog()
+    try:
+        fileLog = open(pathFileLog, "r")
+        lines = fileLog.readlines()
+        for indice in range(len(lines)-1,0,-1):
+            line = lines[indice]
+            if "Presa PresaSmart" in line:
+                return line[line.find("ip ") + 3: line.find(", is_on")]
+    except FileNotFoundError:
+        return ""
+
+def bruteSearchPresa():
     for x in range(100, 120):
         try:
             plug = SmartPlug(baseIp + str(x))
@@ -79,6 +91,22 @@ def getPresa():
             return plug, (baseIp + str(x))
         except:
             continue
+
+def getPresa():
+    # Recupero l'ultimo ip utilizato dalla presa
+    vecchioIp = recuperaUltimoIpConosciutoPresa()
+    if ("192" in vecchioIp):
+        try:
+            plug = SmartPlug(vecchioIp)
+            # Provo ad accede al nome. Va in eccezione se non è la presa
+            plug.name
+            return plug, vecchioIp
+        except:
+            # Ha cambiato ip
+            return bruteSearchPresa()
+    else:
+        # Non riesce a trovare l'ip nel file 
+        return bruteSearchPresa()
 
 class Email(object):
     ''' A class for send a mail (with attachment) through an 
