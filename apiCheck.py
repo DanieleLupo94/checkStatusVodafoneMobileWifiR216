@@ -80,6 +80,7 @@ def recuperaUltimoIpConosciutoPresa():
             line = lines[indice]
             if "Presa PresaSmart" in line:
                 return line[line.find("ip ") + 3: line.find(", is_on")]
+        return ""
     except FileNotFoundError:
         return ""
 
@@ -93,6 +94,7 @@ def bruteSearchPresa():
             continue
 
 def getPresa():
+    #return bruteSearchPresa()
     # Recupero l'ultimo ip utilizato dalla presa
     vecchioIp = recuperaUltimoIpConosciutoPresa()
     if ("192" in vecchioIp):
