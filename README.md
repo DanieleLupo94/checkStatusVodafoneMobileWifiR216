@@ -5,11 +5,11 @@ Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuper
 
 ## Occorrente
  - Presa TP-Link HS1xx;
+ - FireFox installato sul dispostivo;
  - Python 3.5^;
  - requests;
- - bs4;
- - qt4 (https://wiki.qt.io/Apt-get_Qt4_on_the_Raspberry_Pi);
- - dryscrape (https://github.com/niklasb/dryscrape), poiché serve la sessione per mantenere il token;
+ - geckodriver (https://pypi.org/project/geckodriver-autoinstaller/);
+ - selenium e pandas;
  - account su https://ifttt.com ed app mobile per creare e modificare le istruzioni (solo se si vuole la notifica);
  - plugin python per gestire la presa TP-Link (ho usato HS100) https://github.com/vrachieru/tplink-smartplug-api.
  
@@ -18,18 +18,13 @@ Modulo requests
 ```
 pip3 install requests
 ```
-Modulo bs4
+Pandas e Selenium
 ```
-pip3 install bs4
+pip3 install pandas selenium
 ```
-Qt4
+Geckodriver viene installato dall'autoinstaller
 ```
-sudo apt-get install qt4-dev-tools qtcreator
-```
-Dryscrape
-```
-sudo apt-get install qt5-default libqt5webkit5-dev build-essential python-lxml xvfb
-pip3 install dryscrape
+pip3 install geckodriver-autoinstaller
 ```
 Plugin Python per le API della presa wifi
 ```
@@ -37,7 +32,7 @@ pip3 install git+https://github.com/vrachieru/tplink-smartplug-api.git
 ```
 
 ## Utilizzo
-Eseguire lo script python _apiCheck.py_ con la versione di python 3.5 o superiore (vedi dryscrape e qt4).
+Eseguire lo script python _apiCheck.py_ con python 3.
 
 ## Storia
 Dopo aver contattato l'assistenza Amazon per dei problemi coi permessi per creare la skill Alexa, mi hanno detto che quello che voglio fare non si può fare.
@@ -50,12 +45,12 @@ Una volta sul raspberry, l'unico problema riscontrato è stato installare qt5. D
 Una volta provato il codice, ho inserito un service all'avvio che si occupa di mantenere in vita lo script.
 Dopo alcuni mesi ho analizzato le chiamate http effettuate dalla pagina principale per recuperare le informazioni. In questo modo ho trovato la chiamata che permette di ricevere molte informazioni tra cui: se è in carica, lo stato della batteria ed il livello del segnale. Ho riscritto il codice, facendo un po' di pulizia, utilizzando 2 chiamate fondamentali: la prima permette di ricevere il token mentre la seconda riceve le informazioni richieste.
 Dopo un po' di tempo ho contattato il supporto TP-Link per chiedere se avesso implementato una API per controllare la presa da remoto e mi hanno risposto dicendo che su GitHub ci sono repository dove, attraverso il reverse engineering, hanno creato delle API. In particolare mi sono interessato alla verisione Python. Purtroppo la presa che avevo inizialmente utilizza un protocollo troppo sicuro quindi ho comprato il modello TP-Link HS100. In questo modo con le API del modem posso sapere lo stato della batteria mentre con quelle della presa posso sapere se è in carica.
+Dopo qualche mese dall'ultimo upload ho aggiornato il Mac e quindi ho dovuto installare di nuovo da capo. Trovando problemi nell'installazione ho pensato di abbandonare dryscrape ed adottare qualcosa di più supportato, tipo Selenium.
 EOStory
  
 ## Altre fonti
- - esempio di utilizzo di dryscrape (https://stackoverflow.com/questions/8049520/web-scraping-javascript-page-with-python).
-
+ - https://developer.mozilla.org/en-US/docs/Web/WebDriver
 ## Note
  - ho utilizzato Pyhton3.5 inizialmente e poi 3.7;
  - il tutto gira su un Raspberry 3B+ con Raspian Jessie e poi Raspbian GNU/Linux 10 (buster);
- - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha (quando non riceve il token).
+ - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha.
