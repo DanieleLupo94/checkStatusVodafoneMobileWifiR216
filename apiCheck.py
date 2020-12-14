@@ -12,8 +12,8 @@ from email.mime.text import MIMEText
 from getpass import getpass
 from mimetypes import guess_type
 from sys import exit
+import platform
 
-import geckodriver_autoinstaller
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -285,6 +285,9 @@ def main():
         chiudiTutto()
 
 # Lo deve fare solo la prima volta
-geckodriver_autoinstaller.install()
+if 'raspberry' not in platform.uname().node:
+    import geckodriver_autoinstaller
+    geckodriver_autoinstaller.install()
+
 # Diamo inizio alle danze 
 main()
