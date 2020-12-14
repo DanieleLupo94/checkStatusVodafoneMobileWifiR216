@@ -9,30 +9,30 @@ Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuper
  - Python 3.5^;
  - requests;
  - geckodriver (https://pypi.org/project/geckodriver-autoinstaller/);
- - selenium e pandas;
+ - selenium;
  - account su https://ifttt.com ed app mobile per creare e modificare le istruzioni (solo se si vuole la notifica);
  - plugin python per gestire la presa TP-Link (ho usato HS100) https://github.com/vrachieru/tplink-smartplug-api.
  
-## Installazione
-Modulo requests
+## Installazione comune
 ```
-pip3 install requests
+pip3 install requests selenium git+https://github.com/vrachieru/tplink-smartplug-api.git
 ```
-Pandas e Selenium
-```
-pip3 install pandas selenium
-```
-Geckodriver viene installato dall'autoinstaller
+### Geckodriver Raspberry (3B+)
+Scaricare il pacchetto da https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-arm7hf.tar.gz
+Copiare l'eseguibile geckodriver, una volta estratta, nella cartella /usr/local/bin/
+
+Fonte: https://www.raspberrypi.org/forums/viewtopic.php?p=1076713
+
+### Geckodriver per altri sistemi
+Utilizza un autoinstaller che poi va utilizzato prima di richiamare il main.
 ```
 pip3 install geckodriver-autoinstaller
 ```
-Plugin Python per le API della presa wifi
-```
-pip3 install git+https://github.com/vrachieru/tplink-smartplug-api.git
-```
 
 ## Utilizzo
-Eseguire lo script python _apiCheck.py_ con python 3.
+Configurare il file _config_ ed il file _opzioniEmail_ come da template.
+Commentare la riga (e l'import volendo) dell'autoinstaller dei geckodriver se si è su un Raspberry; decommentare altrimenti.
+Eseguire lo script python _apiCheck.py_ con python3.
 
 ## Storia
 Dopo aver contattato l'assistenza Amazon per dei problemi coi permessi per creare la skill Alexa, mi hanno detto che quello che voglio fare non si può fare.
@@ -53,4 +53,5 @@ EOStory
 ## Note
  - ho utilizzato Pyhton3.5 inizialmente e poi 3.7;
  - il tutto gira su un Raspberry 3B+ con Raspian Jessie e poi Raspbian GNU/Linux 10 (buster);
- - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha.
+ - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha;
+ - ho installato tutto anche su un Macbook 2015.
