@@ -1,4 +1,5 @@
  ## TODO
+  - farlo girare anche sulla WSL oppure ubuntu server;
   - gestire i geckodriver in base al sistema che si sta utilizzando;
   - accettare parametri per impostare email, notifica e nome file log;
   - continuare dall'attesa precedente in caso di riavvio (attualmente ricalcola l'attesa dopo un riavvio anche se stava già aspettando);
