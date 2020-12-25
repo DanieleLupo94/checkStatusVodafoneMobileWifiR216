@@ -41,9 +41,12 @@ percentualeScaricamentoAlMinuto = ""
 percentualeCaricamentoAlMinuto = ""
 # Sessione di dryscrape
 session = None
+# Oggetto che mantiene le configurazioni
+configurazioni = {}
 
 def caricaConfigurazioni():
     fileConfig = open('config')
+    global configurazioni
     configurazioni = {}
     for line in fileConfig.read().splitlines():
         configurazioni[line.split(' = ')[0]] = line.split(' = ')[1]
@@ -225,14 +228,16 @@ def controlla():
             plug.turn_off()
             controlla()
         else:
-            # Si carica dello 0,45% al minuto
-            tempoAttesa = 100 - livelloBatteria
-            tempoAttesa = tempoAttesa / percentualeCaricamentoAlMinuto
-            tempoAttesa = int(tempoAttesa)
-            ricontrollo = datetime.datetime.now(
-            ) + datetime.timedelta(hours=int(tempoAttesa/60), minutes=tempoAttesa % 60)
-            salvaLog("Attendo " + str(tempoAttesa) +
-                     " minuti (" + ricontrollo.strftime("%x %X") + ")")
+            if (bool(configurazioni['controlloStatico'])):
+                tempoAttesa = int(configurazioni['secondiControlloStatoStatico'])
+                tempoAttesa = tempoAttesa / 60
+            else:  
+                # Si carica dello 0,45% al minuto
+                tempoAttesa = 100 - livelloBatteria
+                tempoAttesa = tempoAttesa / percentualeCaricamentoAlMinuto
+                tempoAttesa = int(tempoAttesa)
+            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(tempoAttesa/60), minutes=tempoAttesa % 60)
+            salvaLog("Attendo " + str(tempoAttesa) + " minuti (" + ricontrollo.strftime("%x %X") + ")")
             tempoAttesa = tempoAttesa * 60
             time.sleep(tempoAttesa)
             controlla()
@@ -245,16 +250,18 @@ def controlla():
             plug.turn_on()
             controlla()
         else:
-            # Si scarica dello 0,35% al minuto -> (batteria restante)/0,35 = minuti restanti
-            # Batteria restante
-            attesa = livelloBatteria - 13
-            # Tempo restante fino al 13% di batteria
-            attesa = attesa / percentualeScaricamentoAlMinuto
-            attesa = int(attesa)
-            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(attesa/60),
-                                                                       minutes=attesa % 60)
-            salvaLog("Attendo " + str(attesa) +
-                     " minuti (" + ricontrollo.strftime("%x %X") + ")")
+            if (bool(configurazioni['controlloStatico'])):
+                attesa = int(configurazioni['secondiControlloStatoStatico'])
+                attesa = attesa / 60
+            else:
+                # Si scarica dello 0,35% al minuto -> (batteria restante)/0,35 = minuti restanti
+                # Batteria restante
+                attesa = livelloBatteria - 13
+                # Tempo restante fino al 13% di batteria
+                attesa = attesa / percentualeScaricamentoAlMinuto
+                attesa = int(attesa)
+            ricontrollo = datetime.datetime.now() + datetime.timedelta(hours=int(attesa/60), minutes=attesa % 60)
+            salvaLog("Attendo " + str(attesa) + " minuti (" + ricontrollo.strftime("%x %X") + ")")
             attesa = attesa * 60
             time.sleep(attesa)
             controlla()
