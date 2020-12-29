@@ -3,11 +3,7 @@ import datetime
 import urllib.request
 import signal
 from sys import exit
-import xml.etree.ElementTree as ET
 import requests
-from bs4 import BeautifulSoup
-import dryscrape
-import webkit_server
 import os
 import smtplib
 import ssl
@@ -198,30 +194,15 @@ def controlla():
         controlla()
     # Ricarico le configurazioni per aggiornare, eventualmente, i parametri del caricamento/scaricamento
     caricaConfigurazioni()
-    # Visito la pagina principale per prendere il token
-    session.visit(url)
-    response = session.body()
-    # print(str(response))
-    # Visito la pagina delle API con tutte le informazioni
-    session.visit(urlAPI)
-    # Leggo la risposta, che è in XML
-    response = session.body()
-    # TODO: Controllare nel caso in cui non avessi il token
-    # print(str(response))
-
-    # Attraverso il parser recupero le informazioni dall'XML
-    root = ET.fromstring(response)
-    b = root.find('body')
-    response = b.find('response')
-    segnale = response.find('signalicon').text
-
+    if configurazioni['metodo'] == 'dryscrape':
+        livelloBatteria, caricando, segnale = getInformazioniDalleAPIModemDryscrape()
+    elif configurazioni['metodo'] == 'Selenium':
+        livelloBatteria, caricando, segnale = getInformazioniDalleAPIModemSelenium()
+    
     # Controllo se la presa è accesa per determinare se è in carica
     plug, ip = getPresa()
-    salvaLog("Presa " + plug.name + ", ip " +
-             ip + ", is_on " + str(plug.is_on))
+    salvaLog("Presa " + plug.name + ", ip " + ip + ", is_on " + str(plug.is_on))
     inCarica = plug.is_on
-
-    livelloBatteria = response.find('batterypercent').text
 
     salvaLog("Segnale: " + segnale + ", batteria: " + livelloBatteria)
 
@@ -256,7 +237,7 @@ def controlla():
             plug.turn_on()
             controlla()
         else:
-            if (bool(configurazioni['controlloStatico'])):
+            if (configurazioni['controlloStatico']):
                 attesa = int(configurazioni['secondiControlloStatoStatico'])
                 attesa = attesa / 60
             else:
@@ -277,7 +258,7 @@ def chiudiTutto():
     salvaLog("Killo il server.", True)
     # fileLog.close()
     # server.kill()  # Altrimenti resta attivo
-    if (bool(configurazioni['notificaIFTTT'])):
+    if (configurazioni['notificaIFTTT']):
         requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})
     main()
 
@@ -289,19 +270,78 @@ def checkConnection(host='http://google.com'):
     except:
         return False
 
+def getInformazioniDalleAPIModemDryscrape():
+    import xml.etree.ElementTree as ET
+    # Visito la pagina principale per prendere il token
+    session.visit(url)
+    response = session.body()
+    # Visito la pagina delle API con tutte le informazioni
+    session.visit(urlAPI)
+    # Leggo la risposta, che è in XML
+    response = session.body()
+    # TODO: Controllare nel caso in cui non avessi il token
+    # print(str(response))
+
+    # Attraverso il parser recupero le informazioni dall'XML
+    root = ET.fromstring(response)
+    b = root.find('body')
+    response = b.find('response')
+    segnale = response.find('signalicon').text    
+    batteria = response.find('batterypercent').text
+    inCarica = response.find('batterystatus').text
+    return batteria, inCarica, segnale
+
+def getInformazioniDalleAPIModemSelenium():
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.common.keys import Keys
+    from selenium.webdriver.support.expected_conditions import presence_of_element_located
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.firefox.options import Options
+    
+    options = Options()
+    options.add_argument('-headless')
+    driver = webdriver.Firefox(options = options)
+    wait = WebDriverWait(driver, 10)
+    driver.get(url)
+    driver.get(urlAPI)
+    wait.until(presence_of_element_located((By.TAG_NAME, "response")))
+    batteria = driver.find_element_by_tag_name("batterypercent").text
+    inCarica = driver.find_element_by_tag_name("batterystatus").text
+    segnale = driver.find_element_by_tag_name("signalicon").text
+    driver.close()
+    driver.quit()
+    return batteria, inCarica, segnale
 
 def main():
     caricaConfigurazioni()
     salvaLog("Avvio tutto")
-    dryscrape.start_xvfb()
-    server = webkit_server.Server()
-    server_conn = webkit_server.ServerConnection(server=server)
-    driver = dryscrape.driver.webkit.Driver(connection=server_conn)
-    global session
-    session = dryscrape.Session(driver=driver)
+    if configurazioni['metodo'] == 'dryscrape':
+        from bs4 import BeautifulSoup
+        import dryscrape
+        import webkit_server
+        
+        dryscrape.start_xvfb()
+        server = webkit_server.Server()
+        server_conn = webkit_server.ServerConnection(server=server)
+        driver = dryscrape.driver.webkit.Driver(connection=server_conn)
+        global session
+        session = dryscrape.Session(driver=driver)
+    elif configurazioni['metodo'] == 'Selenium':
+        import platform
+        
+        # Lo deve fare solo la prima volta
+        if 'raspberry' not in platform.uname().node:
+            import geckodriver_autoinstaller
+            geckodriver_autoinstaller.install()
     try:
         controlla()
+    except Exception as e:
+        print('Eccezione:', e)
+        exit()
     finally:
         chiudiTutto()
+
+
 
 main()
