@@ -50,6 +50,10 @@ def caricaConfigurazioni():
     configurazioni = {}
     for line in fileConfig.read().splitlines():
         configurazioni[line.split(' = ')[0]] = line.split(' = ')[1]
+        if configurazioni[line.split(' = ')[0]] == 'True':
+            configurazioni[line.split(' = ')[0]] = True
+        if configurazioni[line.split(' = ')[0]] == 'False':
+            configurazioni[line.split(' = ')[0]] = False
     global pathIniziale
     pathIniziale = configurazioni['pathIniziale']
     global audioAccendi
@@ -179,10 +183,14 @@ def salvaLog(testo, conEmail=False):
     fileLog.write("\n")
     # print(">> ", t)
     fileLog.close()
-    if conEmail:
+    if conEmail and configurazioni['notificaEmail']:
         email = Email(opzioni['FROM_ADDRESS'],
                       opzioni['TO_ADDRESS'], "Monitoring modem wifi", t)
         email.send(opzioni['MAIL_USER'], opzioni['MAIL_PASSWORD'])
+
+def notificaIFTTT(testo = ""):
+    if configurazioni['notificaIFTTT']:
+        requests.post(urlWebhook, json={'value1': testo})
 
 def controlla():
     if not checkConnection():
@@ -222,8 +230,7 @@ def controlla():
     if inCarica:
         if livelloBatteria == 100:
             salvaLog("Batteria carica", True)
-            requests.post(urlWebhook, json={
-                          'value1': 'Batteria carica. Spegnere la presa'})
+            notificaIFTTT("Batteria carica. Spegnere la presa.");
             # os.system("omxplayer -o local " + audioSpegni)
             plug.turn_off()
             controlla()
@@ -244,8 +251,7 @@ def controlla():
     else:
         if livelloBatteria < 11:
             salvaLog("Batteria scarica", True)
-            requests.post(urlWebhook, json={
-                          'value1': 'Batteria scarica. Accendere la presa'})
+            notificaIFTTT('Batteria scarica. Accendere la presa')
             # os.system("omxplayer -o local " + audioAccendi)
             plug.turn_on()
             controlla()
@@ -271,8 +277,8 @@ def chiudiTutto():
     salvaLog("Killo il server.", True)
     # fileLog.close()
     # server.kill()  # Altrimenti resta attivo
-    requests.post(urlWebhook, json={
-                  'value1': 'Qualquadra non cosa. Killo il server'})
+    if (bool(configurazioni['notificaIFTTT'])):
+        requests.post(urlWebhook, json={'value1': 'Qualquadra non cosa. Killo il server'})
     main()
 
 
