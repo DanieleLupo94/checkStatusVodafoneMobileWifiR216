@@ -263,7 +263,7 @@ def chiudiTutto():
     main()
 
 
-def checkConnection(host='http://google.com'):
+def checkConnection(host='http://192.168.0.1/html/home.htm'):
     try:
         urllib.request.urlopen(host)  # Python 3.x
         return True
