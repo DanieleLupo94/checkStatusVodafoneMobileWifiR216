@@ -66,7 +66,7 @@ def getPresa():
 # Compone la path del file di log e la restituisce
 def getPathFileLog():
     pathIniziale = getConfigurazione()['pathInizialeFileLog']
-    return pathIniziale + "testAPIlog" + (datetime.datetime.now().strftime("%Y%m%d"))
+    return pathIniziale + "logModemVodafone_" + (datetime.datetime.now().strftime("%Y%m%d"))
 
 # Salvo il log nel file e lo chiudo subito
 def salvaLog(testo):
@@ -78,7 +78,7 @@ def salvaLog(testo):
     fileLog.write("\n")
     # print(">> ", t)
     fileLog.close()
-    #req.post(getConfigurazione()["urlOnlineLogWriter"], data={'riga': t})
+    #req.post(getConfigurazione()["urlOnlineLogWriter"], data={'riga': t, 'nomeFile':'test.txt'})
 
 def chiudiTutto():
     salvaLog('Killo il server.')
@@ -91,6 +91,10 @@ def checkConnection(host='http://google.com'):
     except:
         return False
 
+def sendNotificaIFTTT(testo):
+    if (getConfigurazione()['usaIFTTT'] == True):
+        req.post(getConfigurazione()['urlIFTTT'], json={'value1':str(testo)})
+
 def controlla():
     # Attendo 5 minuti se non c'è connessione
     while(checkConnection() == False):
@@ -98,33 +102,34 @@ def controlla():
     urlModem = getConfigurazione()['url']
     r = req.get(urlModem)
     setCookie = r.headers['Set-Cookie'].split(';path')[0]
-    #print(setCookie)
     r = req.get(getConfigurazione()['urlAPI'], headers = {'Cookie': setCookie})
     # Il contenuto della risposta ha bisogno di essere decodificato in UTF-8
     contenuto = r.content.decode('utf-8')
-    #print(contenuto)
     root_node = ET.fromstring(contenuto)
     livelloBatteria = root_node.find('BatteryLevel').text
     inCarica = root_node.find('BatteryStatus').text
     # inCarica = 0 -> non sta caricando
     # inCarica = 1 -> sta caricando
     presa, ip = getPresa()
-    salvaLog("Presa " + presa.name + ", ip " + ip + ", is_on " + str(presa.is_on))
-    salvaLog("Batteria: " + livelloBatteria + ", sta caricando: " + inCarica)
+    if inCarica == "0":
+        inCarica = False
+    else:
+        inCarica = True
+    salvaLog("Batteria: " + livelloBatteria + ", sta caricando: " + str(inCarica) + ", ip " + ip + ", is_on " + str(presa.is_on))
     livelloBatteria = int(livelloBatteria)
 
     if inCarica:
         if livelloBatteria == 100:
             # Batteria carica
             salvaLog("Batteria carica")
-            req.post(getConfigurazione()['urlIFTTT'], json={'value1':'Batteria carica.'})
+            sendNotificaIFTTT("Batteria carica")
             presa.turn_off()
             controlla()
     else:
         if livelloBatteria < 20:
             # Batteria scarica
             salvaLog("Batteria scarica")
-            req.post(getConfigurazione()['urlIFTTT'], json={'value1':'Batteria scarica.'})
+            sendNotificaIFTTT("Batteria scarica")
             presa.turn_on()
             controlla()
     # Attendo per il controllo
