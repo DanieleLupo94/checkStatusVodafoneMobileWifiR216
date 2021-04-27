@@ -1,0 +1,8 @@
+url = http://192.168.0.1/html/launch.htm
+urlAPI = http://192.168.0.1/api/monitoring/status
+usaIFTTT = False
+urlIFTTT = https://maker.ifttt.com/trigger/<evento>/with/key/<key>
+baseIp = 192.168.0.
+pathInizialeFileLog = ./
+minutiAttesa = 60
+urlOnlineLogWriter = urlFilePHPperScrivereLogOnline.php
