@@ -7,11 +7,13 @@ import requests as req
 # API smart plug kasa
 from tplink_smartplug import SmartPlug
 
+# Controllo se è stato passato il file di configurazione in input
 if len(sys.argv) != 2:
     raise ValueError('Bisogna passare il file di configurazione.')
 
 pathFile = sys.argv[1]
 
+# Leggo i vari parametri della configurazione dal file passato in input
 def getConfigurazione():
     fileConfig = open(pathFile)
     configurazioni = {}
@@ -23,6 +25,7 @@ def getConfigurazione():
             configurazioni[line.split(' = ')[0]] = False
     return configurazioni
 
+# Cerco l'ultimo ip della presa conosciuto all'interno del file di log
 def recuperaUltimoIpConosciutoPresa():
     pathFileLog = getPathFileLog()
     try:
@@ -36,6 +39,7 @@ def recuperaUltimoIpConosciutoPresa():
     except FileNotFoundError:
         return ""
 
+# Provo a chiamare ogni dispositivo nella rete per cercare la presa
 def bruteSearchPresa():
     baseIp = getConfigurazione()['baseIp']
     for x in range(100, 120):
@@ -46,6 +50,7 @@ def bruteSearchPresa():
         except:
             continue
 
+# Cerca la presa nel file di log altrimenti la cerca nella rete
 def getPresa():
     #return bruteSearchPresa()
     # Recupero l'ultimo ip utilizato dalla presa
@@ -80,10 +85,12 @@ def salvaLog(testo):
     fileLog.close()
     #req.post(getConfigurazione()["urlOnlineLogWriter"], data={'riga': t, 'nomeFile':'test.txt'})
 
+# Chiude il processo e manda le relative notifiche
 def chiudiTutto():
     salvaLog('Killo il server.')
     req.post(getConfigurazione()['urlIFTTT'], json={'value1':'Killo il server.'})
 
+# Controlla se il dispositivo è connesso ad internet
 def checkConnection(host='http://google.com'):
     try:
         req.get(host)
@@ -91,10 +98,13 @@ def checkConnection(host='http://google.com'):
     except:
         return False
 
+# Se configurato, manda una notifica IFTTT
 def sendNotificaIFTTT(testo):
     if (getConfigurazione()['usaIFTTT'] == True):
         req.post(getConfigurazione()['urlIFTTT'], json={'value1':str(testo)})
 
+# Metodo principale dove recupera le informazioni sulla saponetta
+# e sulla presa e decide se accendere o spegnere la presa.
 def controlla():
     # Attendo 5 minuti se non c'è connessione
     while(checkConnection() == False):
@@ -139,6 +149,7 @@ def controlla():
     time.sleep(60 * minuti)
     controlla()
 
+# Fa in modo che lo script non venga mai terminato, nemmeno quando va in errore
 def main():
     salvaLog('Avvia tutto')
     try:
