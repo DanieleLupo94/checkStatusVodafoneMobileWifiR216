@@ -1,38 +1,22 @@
 # checkStatusVodafoneMobileWifiR216
-Programma in Python che fa scraping sulla home del dispositivo e controlla la percentuale della batteria.
-Dopo vari tentativi e problemi, mi sono spostato sul rasperry. Vedi la storia per saperne di più.
-Dopo alcuni mesi ho riscritto il codice utilizzando le api del modem per recuperare le informazioni quindi _non viene più fatto scraping_.
+Programma in Python che richiede lo status della saponetta Vodafone per gestire la carica della batteria.
+In base allo stato della batteria viene accesa/spenta una presa TP-Link HS1xx.
 
 ## Occorrente
  - Presa TP-Link HS1xx;
- - FireFox installato sul dispostivo;
  - Python 3.5^;
  - requests;
- - geckodriver (https://pypi.org/project/geckodriver-autoinstaller/);
- - selenium;
  - account su https://ifttt.com ed app mobile per creare e modificare le istruzioni (solo se si vuole la notifica);
  - plugin python per gestire la presa TP-Link (ho usato HS100) https://github.com/vrachieru/tplink-smartplug-api.
  
 ## Installazione comune
 ```
-pip3 install requests selenium git+https://github.com/vrachieru/tplink-smartplug-api.git
-```
-### Geckodriver Raspberry (3B+)
-Scaricare il pacchetto da https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-arm7hf.tar.gz
-Copiare l'eseguibile geckodriver, una volta estratta, nella cartella /usr/local/bin/
-
-Fonte: https://www.raspberrypi.org/forums/viewtopic.php?p=1076713
-
-### Geckodriver per altri sistemi
-Utilizza un autoinstaller che poi va utilizzato prima di richiamare il main.
-```
-pip3 install geckodriver-autoinstaller
+pip3 install requests git+https://github.com/vrachieru/tplink-smartplug-api.git
 ```
 
 ## Utilizzo
 Configurare il file _config_ ed il file _opzioniEmail_ come da template.
-Commentare la riga (e l'import volendo) dell'autoinstaller dei geckodriver se si è su un Raspberry; decommentare altrimenti.
-Eseguire lo script python _apiCheck.py_ con python3.
+Eseguire lo script python _check.py_ con python3.
 
 ## Storia
 Dopo aver contattato l'assistenza Amazon per dei problemi coi permessi per creare la skill Alexa, mi hanno detto che quello che voglio fare non si può fare.
@@ -46,12 +30,5 @@ Una volta provato il codice, ho inserito un service all'avvio che si occupa di m
 Dopo alcuni mesi ho analizzato le chiamate http effettuate dalla pagina principale per recuperare le informazioni. In questo modo ho trovato la chiamata che permette di ricevere molte informazioni tra cui: se è in carica, lo stato della batteria ed il livello del segnale. Ho riscritto il codice, facendo un po' di pulizia, utilizzando 2 chiamate fondamentali: la prima permette di ricevere il token mentre la seconda riceve le informazioni richieste.
 Dopo un po' di tempo ho contattato il supporto TP-Link per chiedere se avesso implementato una API per controllare la presa da remoto e mi hanno risposto dicendo che su GitHub ci sono repository dove, attraverso il reverse engineering, hanno creato delle API. In particolare mi sono interessato alla verisione Python. Purtroppo la presa che avevo inizialmente utilizza un protocollo troppo sicuro quindi ho comprato il modello TP-Link HS100. In questo modo con le API del modem posso sapere lo stato della batteria mentre con quelle della presa posso sapere se è in carica.
 Dopo qualche mese dall'ultimo upload ho aggiornato il Mac e quindi ho dovuto installare di nuovo da capo. Trovando problemi nell'installazione ho pensato di abbandonare dryscrape ed adottare qualcosa di più supportato, tipo Selenium.
+Preso dalla voglia di alleggerire tutto e di trovare un modo più rapido per il controllo della batteria ho riscritto il codice utilizzando solo delle (semplici) chiamate GET, prendendo prima il token e poi facendo richiesta delle statistiche.
 EOStory
- 
-## Altre fonti
- - https://developer.mozilla.org/en-US/docs/Web/WebDriver
-## Note
- - ho utilizzato Pyhton3.5 inizialmente e poi 3.7;
- - il tutto gira su un Raspberry 3B+ con Raspian Jessie e poi Raspbian GNU/Linux 10 (buster);
- - utilizzo un service all'avvio per avviare lo script e riavviarlo se crasha;
- - ho installato tutto anche su un Macbook 2015.
