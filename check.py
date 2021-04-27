@@ -134,6 +134,7 @@ def controlla():
             salvaLog("Batteria carica")
             sendNotificaIFTTT("Batteria carica")
             presa.turn_off()
+            time.sleep(5)
             controlla()
     else:
         if livelloBatteria < 20:
@@ -141,6 +142,7 @@ def controlla():
             salvaLog("Batteria scarica")
             sendNotificaIFTTT("Batteria scarica")
             presa.turn_on()
+            time.sleep(5)
             controlla()
     # Attendo per il controllo
     minuti = getConfigurazione()['minutiAttesa']
