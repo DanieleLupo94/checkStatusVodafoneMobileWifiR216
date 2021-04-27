@@ -16,7 +16,7 @@ pip3 install requests git+https://github.com/vrachieru/tplink-smartplug-api.git
 
 ## Utilizzo
 Configurare il file _config_ ed il file _opzioniEmail_ come da template.
-Eseguire lo script python _check.py_ con python3.
+Eseguire lo script python _check.py_ con python3 passando come parametro il file di configurazione.
 
 ## Storia
 Dopo aver contattato l'assistenza Amazon per dei problemi coi permessi per creare la skill Alexa, mi hanno detto che quello che voglio fare non si può fare.
