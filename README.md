@@ -15,7 +15,7 @@ pip3 install requests git+https://github.com/vrachieru/tplink-smartplug-api.git
 ```
 
 ## Utilizzo
-Configurare il file _config_ ed il file _opzioniEmail_ come da template.
+Configurare il file _config_ come da template.
 Eseguire lo script python _check.py_ con python3 passando come parametro il file di configurazione.
 
 ## Storia
