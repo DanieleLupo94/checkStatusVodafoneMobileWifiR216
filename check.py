@@ -121,14 +121,10 @@ def controlla():
     # inCarica = 0 -> non sta caricando
     # inCarica = 1 -> sta caricando
     presa, ip = getPresa()
-    if inCarica == "0":
-        inCarica = False
-    else:
-        inCarica = True
     salvaLog("Batteria: " + livelloBatteria + ", sta caricando: " + str(inCarica) + ", ip " + ip + ", is_on " + str(presa.is_on))
     livelloBatteria = int(livelloBatteria)
 
-    if inCarica == True:
+    if inCarica == "1":
         if livelloBatteria == 100:
             # Batteria carica
             salvaLog("Batteria carica")
