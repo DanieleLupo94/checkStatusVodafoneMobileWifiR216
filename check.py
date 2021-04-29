@@ -140,6 +140,11 @@ def controlla():
             presa.turn_on()
             time.sleep(5)
             controlla()
+        if livelloBatteria == 100 and presa.is_on == True :
+            # Se la batteria arriva al 100% tecnicamente non sta caricando
+            presa.turn_off()
+            time.sleep(5)
+            controlla()
     # Attendo per il controllo
     minuti = getConfigurazione()['minutiAttesa']
     salvaLog("Attendo " + str(minuti) + " minuti.")
